@@ -1,0 +1,29 @@
+variables:
+  ICEWARP_URL: "https://iwqa01.onice.io"
+  SELENIUM_GRID_URL: ""
+
+stages:
+  - test
+
+playwright-tests:
+  stage: test
+  image: mcr.microsoft.com/playwright:v1.61.1-jammy
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - when: manual
+  variables:
+    ICEWARP_HOSTNAME: "$ICEWARP_URL"
+    PW_TEST_CONNECT_WS_ENDPOINT: "$SELENIUM_GRID_URL"
+  before_script:
+    - npm install -g pnpm@9.6.0
+    - pnpm install --frozen-lockfile
+  script:
+    - pnpm exec playwright test
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - playwright-report/
+    reports:
+      junit: test-results/junit.xml
