@@ -83,40 +83,6 @@ The Page Object classes hold all Playwright locators and interactions;
 the spec files only orchestrate them, so the "what" (test steps) stays
 readable and separate from the "how" (selectors, waits, workarounds).
 
-### About the contact-form test
-
-- icewarp.com doesn't have a dedicated "Contact us" page: every page
-  carries a hidden panel (`#sitewide-contact-window`) that slides in from
-  the **right edge of the viewport** when a contact call-to-action is
-  clicked. `ContactPage` uses `#contact-sales-button` - the primary menu's
-  current implementation of that trigger - and asserts the panel's
-  bounding box sits in the right half of the screen, satisfying "verify
-  the contact form appears on the right side of the UI".
-- The form's Submit button is wired to a **production Google reCAPTCHA**
-  (invisible v2). Confirmed by hand: a real, manually-driven browser
-  submits with no visible challenge at all, but this same test - both
-  headless and headed - is reliably blocked, because reCAPTCHA flags the
-  Playwright-controlled browser itself (`navigator.webdriver` and other
-  CDP artifacts), regardless of how it's clicked. The test still fills the
-  form and asserts step 7 (no inline validation error is shown), then
-  waits briefly for the success panel; if the submission never completes,
-  it reports that explicitly and **skips** the database part instead of
-  failing on a false negative.
-  - There is currently no access to the `Customer` database this form
-    writes to, so the blind (database) part of this scenario cannot be
-    exercised from this repo - it's implemented and unit-tested against
-    mock data (see `PotentialCustomersRepository` /
-    `verifyCustomerRecord.ts`), but has never run against the real table.
-    To actually run it end to end, either (a) supply real `DB_*`
-    credentials once available, or (b) point `CONTACT_SITE_URL` and
-    `DB_*` at a staging environment where the reCAPTCHA sitekey is
-    configured to auto-pass (Google's test keys, or an allow-listed test
-    domain), so the automated submission itself completes.
-- Each run generates a unique e-mail address (`ContactTestDataFactory`),
-  so the resulting `PotentialCustomers` row can always be found
-  unambiguously, and repeated runs never collide.
-
-
 ## CI/CD (GitLab)
 
 `.gitlab-ci.yaml` runs the suite in the official
